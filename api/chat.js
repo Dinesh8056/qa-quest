@@ -1,5 +1,5 @@
 // Vercel Serverless Function — Gemini API proxy
-// GEMINI_API_KEY lives in Vercel Environment Variables (never exposed to browser)
+// Add GEMINI_API_KEY in Vercel Dashboard → Settings → Environment Variables
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -19,33 +19,25 @@ export default async function handler(req, res) {
   try {
     const { messages, system } = req.body;
 
-    // Convert chat history to Gemini format
-    const geminiHistory = messages.slice(0, -1).map(m => ({
+    // Convert chat history to Gemini format (role must be "user" or "model")
+    const contents = messages.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }]
     }));
-
-    const lastMessage = messages[messages.length - 1];
 
     const geminiBody = {
       system_instruction: {
         parts: [{ text: system }]
       },
-      contents: [
-        ...geminiHistory,
-        {
-          role: 'user',
-          parts: [{ text: lastMessage.content }]
-        }
-      ],
+      contents: contents,
       generationConfig: {
         maxOutputTokens: 1024,
         temperature: 0.7
       }
     };
 
-    // ✅ FIXED: correct model name for Gemini API
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+    // ✅ Correct model: gemini-2.0-flash (free, fast, latest)
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
