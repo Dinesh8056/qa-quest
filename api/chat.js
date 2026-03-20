@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return res.status(500).json({
-      error: 'GEMINI_API_KEY not set. Go to Vercel Dashboard → Your Project → Settings → Environment Variables → add GEMINI_API_KEY'
+      error: 'GEMINI_API_KEY not set. Go to Vercel Dashboard → Settings → Environment Variables → add GEMINI_API_KEY'
     });
   }
 
@@ -20,13 +20,11 @@ export default async function handler(req, res) {
     const { messages, system } = req.body;
 
     // Convert chat history to Gemini format
-    // Gemini uses "user" and "model" roles (not "assistant")
     const geminiHistory = messages.slice(0, -1).map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }]
     }));
 
-    // Last message is the current user input
     const lastMessage = messages[messages.length - 1];
 
     const geminiBody = {
@@ -46,7 +44,8 @@ export default async function handler(req, res) {
       }
     };
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // ✅ FIXED: correct model name for Gemini API
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
@@ -61,9 +60,7 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: errMsg });
     }
 
-    // Extract text from Gemini response
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response received.';
-
     return res.status(200).json({ content: text });
 
   } catch (err) {
