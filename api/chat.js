@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   try {
     const { messages, system } = req.body;
 
-    // Convert chat history to Gemini format (role must be "user" or "model")
+    // Convert to Gemini format — roles must be "user" or "model"
     const contents = messages.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }]
@@ -36,8 +36,8 @@ export default async function handler(req, res) {
       }
     };
 
-    // ✅ Correct model: gemini-2.0-flash (free, fast, latest)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    // ✅ gemini-2.5-flash — latest free model (March 2026)
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: 'POST',
